@@ -1,8 +1,5 @@
 import { Vector3 } from 'three';
-
-const bounce = 0.9;
-const wind = 0;
-const friction = 0.999;
+import { CONFIG } from '../Config.js';
 
 //
 
@@ -14,13 +11,7 @@ export default class Point {
         this.prevPosition;
         this.locked = locked
 
-        if (this.locked) {
-            this.defaultColor = 0xff5382;
-        }
-        else {
-            this.defaultColor = 0xffffff;
-            // this.defaultColor = 0x808080;
-        }
+        this.updateColor();
 
         this.setPreviousPosition(x, y, z);
 
@@ -44,9 +35,9 @@ export default class Point {
 
         if (!this.locked) {
 
-            var vx = (this.position.x - this.prevPosition.x) * friction;
-            var vy = (this.position.y - this.prevPosition.y) * friction;
-            var vz = (this.position.z - this.prevPosition.z) * friction;
+            var vx = (this.position.x - this.prevPosition.x) * CONFIG.simulation.friction;
+            var vy = (this.position.y - this.prevPosition.y) * CONFIG.simulation.friction;
+            var vz = (this.position.z - this.prevPosition.z) * CONFIG.simulation.friction;
 
             this.prevPosition.x = this.position.x;
             this.prevPosition.y = this.position.y;
@@ -57,11 +48,11 @@ export default class Point {
             this.position.z += vz;
 
             var g = gravity;
-            g /= (1000/30);
+            g /= CONFIG.simulation.timeStep;
 
             this.position.y += g * delta;
 
-            var w = wind;
+            var w = CONFIG.simulation.wind;
 
             this.position.z += w * delta;
 
@@ -75,25 +66,25 @@ export default class Point {
 
         if (!this.locked) {
 
-            var vx = (this.position.x - this.prevPosition.x) * friction;
-            var vy = (this.position.y - this.prevPosition.y) * friction;
+            var vx = (this.position.x - this.prevPosition.x) * CONFIG.simulation.friction;
+            var vy = (this.position.y - this.prevPosition.y) * CONFIG.simulation.friction;
 
             if (this.position.x > sceneW / 2) {
                 this.position.x = sceneW / 2;
-                this.prevPosition.x = this.position.x + vx * bounce;
+                this.prevPosition.x = this.position.x + vx * CONFIG.simulation.bounce;
             }
             else if (this.position.x < -sceneW / 2) {
                 this.position.x = -sceneW / 2;
-                this.prevPosition.x = this.position.x + vx * bounce;
+                this.prevPosition.x = this.position.x + vx * CONFIG.simulation.bounce;
             }
 
             if (this.position.y > sceneH / 2) {
                 this.position.y = sceneH / 2;
-                this.prevPosition.y = this.position.y + vy * bounce;
+                this.prevPosition.y = this.position.y + vy * CONFIG.simulation.bounce;
             }
             else if (this.position.y < -sceneH / 2) {
                 this.position.y = -sceneH / 2;
-                this.prevPosition.y = this.position.y + vy * bounce;
+                this.prevPosition.y = this.position.y + vy * CONFIG.simulation.bounce;
             }
 
         }
@@ -115,10 +106,10 @@ export default class Point {
     updateColor() {
 
         if (this.locked) {
-            this.defaultColor = 0xff5382;
+            this.defaultColor = CONFIG.cloth.lockedColor;
         }
         else {
-            this.defaultColor = 0xffffff;
+            this.defaultColor = CONFIG.cloth.unlockedColor;
         }
 
     }

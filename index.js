@@ -4,6 +4,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
 
 import { initInstanceObjects } from './src/instance/InstanceInit.js';
+import { CONFIG } from './src/Config.js';
+import { Pane } from 'tweakpane';
 
 //textures
 import Cloth from './src/cloth-texture/fabric_85_basecolor-1K.png';
@@ -31,15 +33,7 @@ const clothMetallic = loader.load(ClothMetallic);
 let renderer, scene, camera, controls;
 let container, stats, clock;
 let instancePoints, shapeGeometry, shape, sticks;
-let dist, order;
 let hemiLight, spotLight;
-let start = Date.now();
-
-// let color = '#403d39';
-let color = '#141414';
-let scale = 0.1;
-const width = 51;
-const height = 51;
 
 //
 
@@ -49,6 +43,7 @@ window.onload = function () {
     initObjects();
     initControls();
     initStats();
+    initTweakpane();
 
     animate();
 }
@@ -68,23 +63,27 @@ function init() {
 
     var camOffset = 2;
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set((width * scale) + camOffset, 2, (height * scale) + camOffset);
+    camera.position.set(
+        (CONFIG.simulation.width * CONFIG.simulation.scale) + camOffset,
+        2,
+        (CONFIG.simulation.height * CONFIG.simulation.scale) + camOffset
+    );
 
     scene = new THREE.Scene();
 
     cloth.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-    hemiLight = new THREE.HemisphereLight(0xc4dce5, 0x080820, 4);
+    hemiLight = new THREE.HemisphereLight(CONFIG.lights.hemiSkyColor, CONFIG.lights.hemiGroundColor, CONFIG.lights.hemiIntensity);
     scene.add(hemiLight);
 
     renderer.toneMapping = THREE.ReinhardToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = CONFIG.render.exposure;
     renderer.shadowMap.enabled = true;
 
-    spotLight = new THREE.SpotLight(0xc4dce5, 4);
+    spotLight = new THREE.SpotLight(CONFIG.lights.spotColor, CONFIG.lights.spotIntensity);
     spotLight.castShadow = true;
-    spotLight.shadow.bias = -0.0001;
-    spotLight.shadow.mapSize = new THREE.Vector2(1024*4,1024*4);
+    spotLight.shadow.bias = CONFIG.lights.spotShadowBias;
+    spotLight.shadow.mapSize = new THREE.Vector2(CONFIG.lights.spotShadowMapSize, CONFIG.lights.spotShadowMapSize);
     scene.add(spotLight)
 }
 
@@ -92,20 +91,20 @@ function init() {
 
 function initObjects() {
  
-    var obj = initInstanceObjects(width, height);
+    var obj = initInstanceObjects(CONFIG.simulation.width, CONFIG.simulation.height);
     instancePoints = obj[0];
     sticks = obj[1];
 
     // Create an indexed PlaneGeometry
     // width segments = width - 1, height segments = height - 1
-    shapeGeometry = new THREE.PlaneGeometry(1, 1, width - 1, height - 1);
+    shapeGeometry = new THREE.PlaneGeometry(1, 1, CONFIG.simulation.width - 1, CONFIG.simulation.height - 1);
 
     //
 
     var material = new THREE.MeshStandardMaterial({
         side: THREE.DoubleSide,
 
-        color: color,
+        color: CONFIG.render.color,
 
         roughnessMap: clothRough,
         aoMap: clothAO,
@@ -124,7 +123,7 @@ function initObjects() {
 
     shape = new THREE.Mesh(shapeGeometry, material);
 
-    shape.scale.set(scale, scale, scale);
+    shape.scale.set(CONFIG.simulation.scale, CONFIG.simulation.scale, CONFIG.simulation.scale);
     shape.castShadow = true;
     shape.receiveShadow = true;
 
@@ -137,7 +136,7 @@ function initObjects() {
 function initControls() {
 
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set( (width * scale) / 2, 0, (height * scale) / 2 );
+    controls.target.set( (CONFIG.simulation.width * CONFIG.simulation.scale) / 2, 0, (CONFIG.simulation.height * CONFIG.simulation.scale) / 2 );
 
     controls.enablePan = false;
     controls.enableZoom = false;
@@ -161,6 +160,75 @@ function initStats() {
     stats = new Stats();
     document.body.appendChild(stats.dom);
 
+}
+
+//
+
+function initTweakpane() {
+    const pane = new Pane({ title: 'Configuration' });
+
+    // Procedurally build the pane from CONFIG
+    function addToPane(folder, obj) {
+        for (const key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                const subFolder = folder.addFolder({ title: key });
+                addToPane(subFolder, obj[key]);
+            } else {
+                folder.addBinding(obj, key).on('change', (ev) => {
+                    handleConfigChange(key, ev.value);
+                });
+            }
+        }
+    }
+
+    addToPane(pane, CONFIG);
+
+    // Add manual actions if needed
+    pane.addButton({ title: 'Restart Simulation' }).on('click', () => {
+        restartSimulation();
+    });
+}
+
+function handleConfigChange(key, value) {
+    // Handle specific updates that require more than just changing the value
+    switch(key) {
+        case 'width':
+        case 'height':
+            // These require restart to take effect on geometry
+            // restartSimulation(); // Can't auto restart on slider drag, too heavy
+            break;
+        case 'scale':
+             if (shape) shape.scale.set(value, value, value);
+             break;
+        case 'color':
+            if (shape && shape.material) shape.material.color.set(value);
+            break;
+        case 'exposure':
+            if (renderer) renderer.toneMappingExposure = value;
+            break;
+        case 'hemiIntensity':
+            if (hemiLight) hemiLight.intensity = value;
+            break;
+        case 'spotIntensity':
+            if (spotLight) spotLight.intensity = value;
+            break;
+        // Physics params (gravity, friction, etc) are read directly from CONFIG in the loop/classes
+    }
+}
+
+function restartSimulation() {
+    scene.remove(shape);
+    shapeGeometry.dispose();
+    shape.material.dispose();
+
+    // Dispose sticks and points if necessary?
+    // JS GC handles it if we drop references.
+
+    initObjects();
+
+    // Update camera target potentially
+    controls.target.set( (CONFIG.simulation.width * CONFIG.simulation.scale) / 2, 0, (CONFIG.simulation.height * CONFIG.simulation.scale) / 2 );
+    controls.update();
 }
 
 //
@@ -236,7 +304,14 @@ function onWindowResize() {
 //
 
 function onClick(e) {
-    instancePoints.gravity = instancePoints.gravity * -1;
-}   
+    // Check if the click originated from the tweakpane container
+    if (e.target.closest('.tp-dfwv')) {
+        return;
+    }
 
-
+    CONFIG.simulation.gravity = CONFIG.simulation.gravity * -1;
+    // We also need to update the binding in tweakpane if we want it to reflect
+    // But since we are procedurally generating, we don't have direct ref to the binding instance easily.
+    // However, Tweakpane polls? No.
+    // Ideally we refresh the pane, but for now let's just update the value.
+}
