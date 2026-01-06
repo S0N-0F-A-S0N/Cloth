@@ -27,5 +27,9 @@ export const CONFIG = {
         lockedColor: 0xff5382,
         unlockedColor: 0xffffff,
         stickColor: 0x999bbc,
+    },
+    gizmos: {
+        showAxes: false,
+        showSpotLightHelper: false,
     }
 };
