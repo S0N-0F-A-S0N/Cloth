@@ -29,11 +29,7 @@ export class Shapes {
             metalnessMap: this.loader.load(ClothMetallic)
         };
 
-        // Apply anisotropy
-        // We need renderer capability to do this properly, but usually we can assume a safe default or access it if we pass renderer.
-        // For now let's just default to 16 or skip if not critical, but original code used `renderer.capabilities.getMaxAnisotropy()`.
-        // Let's assume standard high quality.
-        this.textures.map.anisotropy = 16;
+        this.textures.map.anisotropy = CONFIG.materials.cloth.anisotropy;
     }
 
     init() {
@@ -46,11 +42,17 @@ export class Shapes {
         this.sticks = obj[1];
 
         // Geometry
-        this.geometry = new THREE.PlaneGeometry(1, 1, width - 1, height - 1);
+        this.geometry = new THREE.PlaneGeometry(
+            CONFIG.shapes.clothGeometry.width,
+            CONFIG.shapes.clothGeometry.height,
+            width - 1,
+            height - 1
+        );
 
         // Material
+        const matConfig = CONFIG.materials.cloth;
         this.material = new THREE.MeshStandardMaterial({
-            side: THREE.DoubleSide,
+            side: matConfig.side,
             color: CONFIG.render.color,
             map: this.textures.map,
             roughnessMap: this.textures.roughnessMap,
@@ -58,9 +60,9 @@ export class Shapes {
             bumpMap: this.textures.bumpMap,
             normalMap: this.textures.normalMap,
             metalnessMap: this.textures.metalnessMap,
-            normalScale: new THREE.Vector2(0.5, 0.5),
-            bumpScale: 1,
-            roughness: 1,
+            normalScale: new THREE.Vector2(matConfig.normalScale.x, matConfig.normalScale.y),
+            bumpScale: matConfig.bumpScale,
+            roughness: matConfig.roughness,
         });
 
         this.mesh = new THREE.Mesh(this.geometry, this.material);
@@ -74,7 +76,7 @@ export class Shapes {
     update(delta) {
         // Update Physics
         this.instancePoints.updatePoints(delta);
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < CONFIG.simulation.iterations; i++) {
             this.sticks.forEach(function (stick) {
                 stick.updateStick(delta);
             });

@@ -11,7 +11,7 @@ export class Gizmos {
     }
 
     init() {
-        this.axesHelper = new THREE.AxesHelper(10);
+        this.axesHelper = new THREE.AxesHelper(CONFIG.gizmos.axesSize);
         this.axesHelper.visible = CONFIG.gizmos.showAxes;
         this.scene.add(this.axesHelper);
 

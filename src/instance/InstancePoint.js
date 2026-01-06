@@ -11,8 +11,12 @@ export default class InstancePoint {
 
         this.points = points;
 
-        var geometry = new THREE.SphereGeometry(radius, 16, 16);
-        var material = new THREE.MeshBasicMaterial(CONFIG.cloth.unlockedColor);
+        var geometry = new THREE.SphereGeometry(
+            radius,
+            CONFIG.shapes.pointGeometry.widthSegments,
+            CONFIG.shapes.pointGeometry.heightSegments
+        );
+        var material = new THREE.MeshBasicMaterial({ color: CONFIG.materials.point.unlockedColor });
 
         this.mesh = new THREE.InstancedMesh(geometry, material, this.points.length);
 

@@ -68,12 +68,20 @@ export class App {
     }
 
     initCamera() {
-        const camOffset = 2;
         const targetX = (CONFIG.simulation.width * CONFIG.simulation.scale);
         const targetZ = (CONFIG.simulation.height * CONFIG.simulation.scale);
 
-        this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-        this.camera.position.set(targetX + camOffset, 2, targetZ + camOffset);
+        this.camera = new THREE.PerspectiveCamera(
+            CONFIG.app.camera.fov,
+            window.innerWidth / window.innerHeight,
+            CONFIG.app.camera.near,
+            CONFIG.app.camera.far
+        );
+        this.camera.position.set(
+            targetX + CONFIG.app.camera.offset,
+            CONFIG.app.camera.height,
+            targetZ + CONFIG.app.camera.offset
+        );
     }
 
     onWindowResize() {
@@ -92,7 +100,6 @@ export class App {
         if (e.target.closest('.tp-dfwv')) return;
 
         // Delegate to Shapes or handle global click logic
-        // For now, reverse gravity as in original
         CONFIG.simulation.gravity = CONFIG.simulation.gravity * -1;
     }
 
@@ -100,12 +107,18 @@ export class App {
         requestAnimationFrame(this.animate.bind(this));
 
         let delta = this.clock.getDelta();
-        if (delta > 1 / 5) delta = 0;
+        if (delta > CONFIG.app.maxDelta) delta = 0;
 
         // Update modules
         this.shapes.update(delta);
         this.helpers.update();
-        this.gizmos.update(); // If gizmos need updates (e.g. following lights)
+        this.gizmos.update();
+
+        // Update lights that follow camera/scene logic if needed
+        // Original code updated spotlight based on camera position
+        if (this.lights) {
+            this.lights.updatePosition(this.camera.position);
+        }
 
         this.renderer.render(this.scene, this.camera);
     }

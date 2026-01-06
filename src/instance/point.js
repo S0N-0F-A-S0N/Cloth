@@ -20,7 +20,8 @@ export default class Point {
     //
 
     test() {
-        this.position.z += 0.005;
+        // Legacy test function
+        this.position.z += 0;
     }
 
     //
@@ -106,10 +107,10 @@ export default class Point {
     updateColor() {
 
         if (this.locked) {
-            this.defaultColor = CONFIG.cloth.lockedColor;
+            this.defaultColor = CONFIG.materials.point.lockedColor;
         }
         else {
-            this.defaultColor = CONFIG.cloth.unlockedColor;
+            this.defaultColor = CONFIG.materials.point.unlockedColor;
         }
 
     }

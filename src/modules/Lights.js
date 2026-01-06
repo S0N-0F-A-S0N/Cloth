@@ -26,8 +26,11 @@ export class Lights {
             CONFIG.lights.spotShadowMapSize
         );
 
-        // Initial position will be set in update, but let's give it a default
-        this.spotLight.position.set(10, 10, 10);
+        this.spotLight.position.set(
+            CONFIG.lights.spotInitialPos.x,
+            CONFIG.lights.spotInitialPos.y,
+            CONFIG.lights.spotInitialPos.z
+        );
 
         this.scene.add(this.spotLight);
     }
@@ -35,9 +38,9 @@ export class Lights {
     updatePosition(targetPosition) {
         if (this.spotLight) {
             this.spotLight.position.set(
-                targetPosition.x + 1,
-                targetPosition.y + 1,
-                targetPosition.z + 1
+                targetPosition.x + CONFIG.lights.spotOffset.x,
+                targetPosition.y + CONFIG.lights.spotOffset.y,
+                targetPosition.z + CONFIG.lights.spotOffset.z
             );
         }
     }
