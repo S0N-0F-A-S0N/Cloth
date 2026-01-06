@@ -96,68 +96,9 @@ function initObjects() {
     instancePoints = obj[0];
     sticks = obj[1];
 
-    var pos = []
-    order = []
-
-    // number of squares
-    var squares = (width - 1) * (height - 1);
-    var points = instancePoints.points;
-
-    for (let i = 0; i < (points.length + 0); i++) {
-
-        if ((i + 1) < squares + (height - 1)) {
-            if (((i + 1) % width) != 0) {
-                pos.push(points[i].position);
-                pos.push(points[i + 1].position);
-                pos.push(points[i + width].position);
-
-                order.push(i);
-                order.push(i + 1);
-                order.push(i + width);
-
-                pos.push(points[i + 1].position);
-                pos.push(points[i + width].position);
-                pos.push(points[i + width + 1].position);
-
-                order.push(i + 1);
-                order.push(i + width);
-                order.push(i + width + 1);
-            }
-        }
-    }
-
-    shapeGeometry = new THREE.BufferGeometry().setFromPoints(pos);
-
-    shapeGeometry.computeVertexNormals();
-    shapeGeometry.computeBoundingBox();
-    
-    //
-
-    var base =
-        [
-            // top left
-            0.0, 0.0,
-            1.0, 0.0,
-            0.0, 1.0,
-
-            // bottom right
-            1.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0
-            
-        ];
-
-    var quad_uvs = []
-
-    for (let i = 0 ; i < ((width-1)*(height-1)) ; i++) {
-        base.forEach(function (q) {
-            quad_uvs.push(q)
-        });
-    }
-
-    var uvs = new Float32Array( quad_uvs);
-
-    shapeGeometry.setAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
+    // Create an indexed PlaneGeometry
+    // width segments = width - 1, height segments = height - 1
+    shapeGeometry = new THREE.PlaneGeometry(1, 1, width - 1, height - 1);
 
     //
 
@@ -183,6 +124,7 @@ function initObjects() {
 
     shape = new THREE.Mesh(shapeGeometry, material);
 
+    shape.scale.set(scale, scale, scale);
     shape.castShadow = true;
     shape.receiveShadow = true;
 
@@ -242,19 +184,18 @@ function animate() {
     }
 
 
-    for (let i = 0; i < order.length; i++) {
+    const positions = shapeGeometry.attributes.position.array;
+    for (let i = 0; i < instancePoints.points.length; i++) {
 
-        var index = order[i]
+        const pos = instancePoints.points[i].position;
 
-        var pos = instancePoints.points[index].position;
-
-        shapeGeometry.attributes.position.setXYZ(i, pos.x, pos.y, pos.z);
+        positions[i * 3] = pos.x;
+        positions[i * 3 + 1] = pos.y;
+        positions[i * 3 + 2] = pos.z;
 
     }
 
     shapeGeometry.attributes.position.needsUpdate = true;
-
-    shapeGeometry.scale(scale, scale, scale)
     shapeGeometry.computeVertexNormals();
 
     spotLight.position.set(
