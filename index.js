@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-import Stats from 'three/examples/jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
 import { initInstanceObjects } from './src/instance/InstanceInit.js';
 
@@ -255,7 +255,6 @@ function animate() {
     shapeGeometry.attributes.position.needsUpdate = true;
 
     shapeGeometry.scale(scale, scale, scale)
-    shapeGeometry.computeFaceNormals();
     shapeGeometry.computeVertexNormals();
 
     spotLight.position.set(
