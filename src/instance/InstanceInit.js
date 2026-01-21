@@ -2,6 +2,7 @@ import InstancePoint from './InstancePoint.js'
 
 import Point from './point.js';
 import Stick from './stick.js';
+import { CONFIG } from '../Config.js';
 
 //
 
@@ -54,7 +55,7 @@ export function initInstanceObjects(width, height) {
     points[(Math.round((width*height)/2))-Math.round(width/2)-1].toggleLocked();
     points[(Math.round((width*height)/2))+Math.round(width/2)-1].toggleLocked();
 
-    var instancePoints = new InstancePoint(points, 0.1);
+    var instancePoints = new InstancePoint(points, CONFIG.simulation.pointRadius);
 
     returnArray.push(instancePoints);
     returnArray.push(sticks);

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CONFIG } from '../Config.js';
 
 const dummy = new THREE.Object3D();
 
@@ -10,20 +11,27 @@ export default class InstancePoint {
 
         this.points = points;
 
-        var geometry = new THREE.SphereGeometry(radius, 16, 16);
-        var material = new THREE.MeshBasicMaterial(0xffffff);
+        var geometry = new THREE.SphereGeometry(
+            radius,
+            CONFIG.shapes.pointGeometry.widthSegments,
+            CONFIG.shapes.pointGeometry.heightSegments
+        );
+        var material = new THREE.MeshBasicMaterial({ color: CONFIG.materials.point.unlockedColor });
 
         this.mesh = new THREE.InstancedMesh(geometry, material, this.points.length);
 
         this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // will be updated every frame
 
-        this.gravity = -9.81;
+        this.gravity = CONFIG.simulation.gravity;
 
     }
 
     //
 
     updatePoints(delta) {
+
+        // Sync gravity with config in case it changed
+        this.gravity = CONFIG.simulation.gravity;
 
         // update points in random order
         var random = this.generateRandomIndexes(this.points.length);
